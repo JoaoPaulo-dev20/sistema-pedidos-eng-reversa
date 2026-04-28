@@ -1,54 +1,67 @@
-# Arquitetura e Modelagem do Sistema Tropykaly Pizza
+# 🏗️ Proposta de Arquitetura: Sistema Tropykaly Pizza
 
-# Arquitetura do Sistema Tropykaly Pizza
+Este documento formaliza a proposta de reestruturação arquitetural e modelagem de dados para o sistema da **Tropykaly Pizza**. O objetivo é estabelecer um guia técnico sólido baseado em padrões de mercado e boas práticas de Engenharia de Software.
 
-Proponho a seguinte arquitetura a ser seguida:
+---
 
-- Aplicação web em camadas:
-	- Frontend: interface responsiva para catálogo, busca e carrinho.
-	- API: serviços para regras de negócio e verificação do estado operacional.
-	- Persistência: banco de dados para produtos, pedidos e clientes.
-- Estado operacional centralizado: endpoint único que determina se pedidos são aceitos (aberto/fechado).
-- Padrões recomendados: Factory, Singleton, State.
+##  1. Estilo Arquitetural
+A aplicação segue o padrão de **Arquitetura em Camadas (Layered Architecture)**. Esta escolha visa a separação de preocupações (*Separation of Concerns*), facilitando a manutenção e a testabilidade de cada módulo de forma isolada.
 
-Recomendo adotar esta proposta como guia arquitetural mínimo.
-- id
-- tipo
-- status
-- valor
+* **Camada de Apresentação (Frontend):** Interface responsiva para o cliente (Catálogo, Busca, Carrinho).
+* **Camada de Aplicação/Negócio (API Services):** Centraliza as regras de negócio, validações e o controle do estado operacional.
+* **Camada de Persistência (Data Access):** Gerenciamento da comunicação com o banco de dados (Clientes, Produtos, Pedidos).
 
-#### StatusOperacional
-- status
-- mensagem
-- horarioFuncionamento
 
-### 8.2 Relacionamentos básicos
 
-- Categoria 1 -> * Produto
-- Cliente 1 -> * Pedido
-- Pedido 1 -> * ItemPedido
-- ItemPedido * -> 1 Produto
-- Pedido 1 -> 0..1 Pagamento
-- Cliente 1 -> * Endereco
-- StatusOperacional 1 -> 1 Pedido, no sentido de controlar se o fluxo pode ser executado
+---
 
-### 8.3 Versão textual do diagrama
+##  2. Padrões de Projeto (Design Patterns)
 
-```
-Categoria 1 --- * Produto
-Cliente 1 --- * Pedido
-Cliente 1 --- * Endereco
-Pedido 1 --- * ItemPedido
-ItemPedido * --- 1 Produto
-Pedido 1 --- 0..1 Pagamento
-StatusOperacional controla Pedido
-```
+Para solucionar problemas de fluxo e criação de objetos, propõe-se a adoção dos seguintes padrões GoF:
 
-### 8.4 Como desenhar primeiro
+| Padrão | Aplicação Técnica | Objetivo |
+| :--- | :--- | :--- |
+| **Singleton** | `StatusOperacional` | Garante uma instância única global para validar se a loja está aberta/fechada. |
+| **State** | Entidade `Pedido` | Gerencia as transições de status (Pendente, Preparo, Entrega, Finalizado). |
+| **Factory** | `Produto` / `Pagamento` | Desacopla a lógica de criação de diferentes tipos de produtos e métodos de pagamento. |
 
-1. Desenhe as classes principais como caixas.
-2. Coloque os atributos dentro de cada caixa.
-3. Ligue as classes com as multiplicidades acima.
-4. Depois, refine com métodos apenas se o professor exigir mais detalhe.
-5. Se quiser simplificar, foque em Produto, Categoria, Pedido, ItemPedido e Cliente como núcleo do modelo.
+---
 
+##  3. Modelagem de Domínio
+
+### 3.1 Entidades e Atributos Principais
+
+* **Pedido:** `id`, `tipo` (entrega/balcão), `status` (State), `valor_total`.
+* **StatusOperacional:** `is_aberto` (bool), `mensagem_status`, `horario_funcionamento`.
+* **Produto/Categoria:** Identificação técnica e agrupamento de itens do cardápio.
+
+### 3.2 Relacionamentos e Cardinalidade
+Abaixo, a definição dos vínculos entre os objetos de negócio:
+
+* **Categoria** (1) ─── (*) **Produto**
+* **Cliente** (1) ─── (*) **Pedido**
+* **Cliente** (1) ─── (*) **Endereco**
+* **Pedido** (1) ─── (*) **ItemPedido**
+* **ItemPedido** (*) ─── (1) **Produto**
+* **Pedido** (1) ─── (0..1) **Pagamento**
+* **StatusOperacional** ─── (Controla) ─── **Pedido**
+
+
+
+---
+
+##  4. Representação Visual (UML)
+
+```mermaid
+classDiagram
+    direction TB
+    class Cliente { +id, +nome, +telefone }
+    class Pedido { +id, +status, +valorTotal, +validarFluxo() }
+    class StatusOperacional { +bool isAberto, +verificarHorario() }
+    class ItemPedido { +quantidade, +subtotal }
+
+    Cliente "1" -- "*" Pedido
+    Pedido "1" -- "*" ItemPedido
+    ItemPedido "*" -- "1" Produto
+    Categoria "1" -- "*" Produto
+    StatusOperacional ..> Pedido : controla
