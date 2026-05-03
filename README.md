@@ -61,5 +61,5 @@ Projeto em desenvolvimento na branch `atividade_03`
 - Integração: 1,0 ponto
 - Deploy: 1,0 ponto
 - Docker: 1,5 pontos
-- Código: 0,5 ponto
-- Justificativa: 0,5 ponto
+- Código: 0,5 pontos
+- Justificativa: 0,5 pontos
